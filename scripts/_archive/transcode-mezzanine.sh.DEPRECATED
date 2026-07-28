@@ -1,0 +1,205 @@
+#!/usr/bin/env bash
+# ------------------------------------------------------------------------------
+# transcode-mezzanine.sh
+#
+# Batch-transcode iPhone .MOV files (HEVC/H.264, SDR or HDR/HLG) into DNxHR
+# mezzanine masters for editing and AI processing.
+#
+# Project: NeurIPS 2026 Creative AI Track — "Agency"
+# Author:  Julia Suzuki (Truly Human AI)
+#
+# Usage:
+#   ./scripts/transcode-mezzanine.sh                 # default: 00_originals -> 01_mezzanine
+#   ./scripts/transcode-mezzanine.sh <input_dir> <output_dir>
+#
+# Behavior:
+#   - Recursively finds .MOV / .mov / .mp4 files under <input_dir>.
+#   - Auto-detects HDR (HLG / PQ) vs SDR from color_transfer metadata.
+#   - Auto-detects rotation metadata and applies transpose if needed.
+#   - Encodes to DNxHR HQX (10-bit) for HDR sources, DNxHR HQ (8-bit) for SDR.
+#   - Preserves original folder structure inside <output_dir>.
+#   - Skips files that already have an output (idempotent — safe to re-run).
+#   - Logs every command to scripts/transcode.log for reproducibility.
+# ------------------------------------------------------------------------------
+
+set -euo pipefail
+
+# --- Config -------------------------------------------------------------------
+
+INPUT_DIR="${1:-00_originals}"
+OUTPUT_DIR="${2:-01_mezzanine}"
+LOG_FILE="scripts/transcode.log"
+
+# Audio settings (uncompressed PCM, standard for mezzanine)
+AUDIO_CODEC="pcm_s16le"
+AUDIO_RATE="48000"
+
+# --- Preflight checks ---------------------------------------------------------
+
+if ! command -v ffmpeg >/dev/null 2>&1; then
+  echo "ERROR: ffmpeg not found. Install with: brew install ffmpeg" >&2
+  exit 1
+fi
+
+if ! command -v ffprobe >/dev/null 2>&1; then
+  echo "ERROR: ffprobe not found (ships with ffmpeg)." >&2
+  exit 1
+fi
+
+if [[ ! -d "$INPUT_DIR" ]]; then
+  echo "ERROR: Input directory '$INPUT_DIR' does not exist." >&2
+  exit 1
+fi
+
+mkdir -p "$OUTPUT_DIR"
+mkdir -p "$(dirname "$LOG_FILE")"
+
+echo "" | tee -a "$LOG_FILE"
+echo "===== Transcode run: $(date -u +'%Y-%m-%dT%H:%M:%SZ') =====" | tee -a "$LOG_FILE"
+echo "Input:  $INPUT_DIR" | tee -a "$LOG_FILE"
+echo "Output: $OUTPUT_DIR" | tee -a "$LOG_FILE"
+
+# --- Helpers ------------------------------------------------------------------
+
+# Read a single ffprobe field from stream v:0
+probe() {
+  local file="$1" field="$2"
+  ffprobe -v error -select_streams v:0 \
+    -show_entries stream="$field" \
+    -of default=noprint_wrappers=1:nokey=1 "$file" 2>/dev/null || true
+}
+
+# Read rotation from side_data (modern iPhones) or tag (older files)
+probe_rotation() {
+  local file="$1"
+  # Try side_data displaymatrix rotation first
+  local rot
+  rot=$(ffprobe -v error -select_streams v:0 \
+    -show_entries stream_side_data=rotation \
+    -of default=noprint_wrappers=1:nokey=1 "$file" 2>/dev/null | head -1)
+  if [[ -z "$rot" ]]; then
+    rot=$(ffprobe -v error -select_streams v:0 \
+      -show_entries stream_tags=rotate \
+      -of default=noprint_wrappers=1:nokey=1 "$file" 2>/dev/null | head -1)
+  fi
+  echo "${rot:-0}"
+}
+
+# Map rotation degrees to an ffmpeg transpose filter
+rotation_filter() {
+  local deg="$1"
+  # Normalize negative values (e.g. -90 == 270)
+  deg=$(( (deg % 360 + 360) % 360 ))
+  case "$deg" in
+    90)  echo "transpose=1" ;;
+    180) echo "transpose=2,transpose=2" ;;
+    270) echo "transpose=2" ;;
+    *)   echo "" ;;
+  esac
+}
+
+# --- Main loop ----------------------------------------------------------------
+
+shopt -s nullglob globstar nocaseglob
+
+count_total=0
+count_done=0
+count_skip=0
+count_fail=0
+
+# Collect files (case-insensitive)
+mapfile -t FILES < <(find "$INPUT_DIR" -type f \( -iname '*.mov' -o -iname '*.mp4' \) | sort)
+
+if [[ ${#FILES[@]} -eq 0 ]]; then
+  echo "No .mov / .mp4 files found under $INPUT_DIR" | tee -a "$LOG_FILE"
+  exit 0
+fi
+
+echo "Found ${#FILES[@]} source file(s)." | tee -a "$LOG_FILE"
+
+for src in "${FILES[@]}"; do
+  count_total=$((count_total + 1))
+
+  # Preserve subfolder structure inside OUTPUT_DIR
+  rel_path="${src#$INPUT_DIR/}"
+  rel_dir="$(dirname "$rel_path")"
+  base_name="$(basename "$src")"
+  stem="${base_name%.*}"
+  out_dir="$OUTPUT_DIR/$rel_dir"
+  out_file="$out_dir/${stem}.mov"
+
+  mkdir -p "$out_dir"
+
+  if [[ -f "$out_file" ]]; then
+    echo "[SKIP] $out_file (already exists)" | tee -a "$LOG_FILE"
+    count_skip=$((count_skip + 1))
+    continue
+  fi
+
+  # Probe the source
+  color_trc=$(probe "$src" "color_transfer")
+  pix_fmt=$(probe "$src" "pix_fmt")
+  rotation=$(probe_rotation "$src")
+  rot_filter=$(rotation_filter "$rotation")
+
+  # Decide profile + color tags based on transfer function
+  case "$color_trc" in
+    arib-std-b67)  # HLG HDR (default for iPhone 12+ in HDR mode)
+      profile="dnxhr_hqx"
+      pix_out="yuv422p10le"
+      color_args=( -color_primaries bt2020 -color_trc arib-std-b67 -colorspace bt2020nc )
+      hdr_note="HDR/HLG"
+      ;;
+    smpte2084)     # HDR10 (PQ)
+      profile="dnxhr_hqx"
+      pix_out="yuv422p10le"
+      color_args=( -color_primaries bt2020 -color_trc smpte2084 -colorspace bt2020nc )
+      hdr_note="HDR10/PQ"
+      ;;
+    *)             # SDR (bt709 or unspecified)
+      profile="dnxhr_hq"
+      pix_out="yuv422p"
+      color_args=( -color_primaries bt709 -color_trc bt709 -colorspace bt709 )
+      hdr_note="SDR"
+      ;;
+  esac
+
+  # Build video filter chain
+  vf_chain="format=$pix_out"
+  if [[ -n "$rot_filter" ]]; then
+    vf_chain="$rot_filter,$vf_chain"
+  fi
+
+  echo "" | tee -a "$LOG_FILE"
+  echo "[ENCODE] $src" | tee -a "$LOG_FILE"
+  echo "  -> $out_file" | tee -a "$LOG_FILE"
+  echo "  source: pix_fmt=$pix_fmt color_trc=${color_trc:-unspecified} rotation=${rotation}" | tee -a "$LOG_FILE"
+  echo "  target: profile=$profile ($hdr_note) vf='$vf_chain'" | tee -a "$LOG_FILE"
+
+  if ffmpeg -hide_banner -loglevel warning -stats -y \
+      -i "$src" \
+      -map_metadata 0 \
+      -vf "$vf_chain" \
+      -c:v dnxhd -profile:v "$profile" \
+      "${color_args[@]}" \
+      -c:a "$AUDIO_CODEC" -ar "$AUDIO_RATE" \
+      "$out_file" 2>>"$LOG_FILE"; then
+    count_done=$((count_done + 1))
+    echo "  [OK]" | tee -a "$LOG_FILE"
+  else
+    count_fail=$((count_fail + 1))
+    echo "  [FAIL] see $LOG_FILE" | tee -a "$LOG_FILE"
+    rm -f "$out_file"
+  fi
+done
+
+echo "" | tee -a "$LOG_FILE"
+echo "===== Summary =====" | tee -a "$LOG_FILE"
+echo "  total:   $count_total" | tee -a "$LOG_FILE"
+echo "  encoded: $count_done" | tee -a "$LOG_FILE"
+echo "  skipped: $count_skip" | tee -a "$LOG_FILE"
+echo "  failed:  $count_fail" | tee -a "$LOG_FILE"
+
+if [[ $count_fail -gt 0 ]]; then
+  exit 1
+fi

@@ -1,0 +1,40 @@
+# --- Media (large, regenerable or backed up separately) ----------------------
+00_originals/
+01_mezzanine/
+02_ai_input/
+03_ai_output/
+05_final/
+audio/
+stills/
+
+# But DO track a placeholder so the folder structure is visible in git
+!00_originals/.gitkeep
+!01_mezzanine/.gitkeep
+!02_ai_input/.gitkeep
+!03_ai_output/.gitkeep
+!05_final/.gitkeep
+!audio/.gitkeep
+!stills/.gitkeep
+
+# --- NLE / edit project caches ------------------------------------------------
+04_edit/**/CacheClip/
+04_edit/**/Renders/
+04_edit/**/Proxy/
+04_edit/**/*.autosave/
+04_edit/**/Backup/
+
+# --- Logs & scratch -----------------------------------------------------------
+scripts/*.log
+scripts/tmp/
+*.tmp
+
+# --- OS cruft -----------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+._*
+
+# --- Editor / IDE -------------------------------------------------------------
+.vscode/
+.idea/
+*.swp

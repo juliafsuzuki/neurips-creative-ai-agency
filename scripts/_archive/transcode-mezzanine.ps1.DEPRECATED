@@ -1,0 +1,192 @@
+# ------------------------------------------------------------------------------
+# transcode-mezzanine.ps1
+#
+# Windows PowerShell version of the mezzanine transcoder.
+# Batch-transcodes iPhone .MOV files into DNxHR mezzanine masters for editing
+# and AI processing.
+#
+# Project: NeurIPS 2026 Creative AI Track — "Agency"
+# Author:  Julia Suzuki (Truly Human AI)
+#
+# Usage (from the project root folder):
+#   .\scripts\transcode-mezzanine.ps1
+#   .\scripts\transcode-mezzanine.ps1 -InputDir "00_originals\showcase" -OutputDir "01_mezzanine\showcase"
+#
+# What it does:
+#   - Finds every .MOV / .mp4 file under the input folder
+#   - Auto-detects HDR (HLG / HDR10) vs SDR footage and picks the right settings
+#   - Auto-corrects rotation (so vertical iPhone clips aren't sideways)
+#   - Skips files already transcoded (safe to re-run when you add new footage)
+#   - Logs every command to scripts\transcode.log
+# ------------------------------------------------------------------------------
+
+param(
+    [string]$InputDir  = "00_originals",
+    [string]$OutputDir = "01_mezzanine"
+)
+
+$ErrorActionPreference = "Stop"
+$LogFile = "scripts\transcode.log"
+
+# --- Preflight checks ---------------------------------------------------------
+
+function Test-Command($name) {
+    return [bool](Get-Command $name -ErrorAction SilentlyContinue)
+}
+
+if (-not (Test-Command "ffmpeg")) {
+    Write-Host "ERROR: ffmpeg not found." -ForegroundColor Red
+    Write-Host "Install it with:  winget install `"FFmpeg (Essentials Build)`"" -ForegroundColor Yellow
+    Write-Host "Then close and reopen PowerShell, and try again."
+    exit 1
+}
+if (-not (Test-Command "ffprobe")) {
+    Write-Host "ERROR: ffprobe not found (it ships with ffmpeg)." -ForegroundColor Red
+    exit 1
+}
+if (-not (Test-Path $InputDir)) {
+    Write-Host "ERROR: Input folder '$InputDir' does not exist." -ForegroundColor Red
+    exit 1
+}
+
+New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
+New-Item -ItemType Directory -Path (Split-Path $LogFile) -Force | Out-Null
+
+function Log($msg) {
+    Write-Host $msg
+    Add-Content -Path $LogFile -Value $msg
+}
+
+Log ""
+Log "===== Transcode run: $(Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ') ====="
+Log "Input:  $InputDir"
+Log "Output: $OutputDir"
+
+# --- Helpers ------------------------------------------------------------------
+
+function Get-ProbeField($file, $field) {
+    $out = & ffprobe -v error -select_streams v:0 `
+        -show_entries "stream=$field" `
+        -of "default=noprint_wrappers=1:nokey=1" $file 2>$null
+    return ($out | Select-Object -First 1)
+}
+
+function Get-Rotation($file) {
+    $rot = & ffprobe -v error -select_streams v:0 `
+        -show_entries "stream_side_data=rotation" `
+        -of "default=noprint_wrappers=1:nokey=1" $file 2>$null | Select-Object -First 1
+    if (-not $rot) {
+        $rot = & ffprobe -v error -select_streams v:0 `
+            -show_entries "stream_tags=rotate" `
+            -of "default=noprint_wrappers=1:nokey=1" $file 2>$null | Select-Object -First 1
+    }
+    if (-not $rot) { return 0 }
+    return [int]$rot
+}
+
+function Get-RotationFilter($deg) {
+    $d = (($deg % 360) + 360) % 360
+    switch ($d) {
+        90  { return "transpose=1" }
+        180 { return "transpose=2,transpose=2" }
+        270 { return "transpose=2" }
+        default { return "" }
+    }
+}
+
+# --- Main loop ----------------------------------------------------------------
+
+$files = Get-ChildItem -Path $InputDir -Recurse -File |
+         Where-Object { $_.Extension -match '^\.(mov|mp4)$' } |
+         Sort-Object FullName
+
+if ($files.Count -eq 0) {
+    Log "No .mov / .mp4 files found under $InputDir"
+    exit 0
+}
+
+Log "Found $($files.Count) source file(s)."
+
+$total = 0; $done = 0; $skip = 0; $fail = 0
+
+foreach ($src in $files) {
+    $total++
+    $srcPath = $src.FullName
+
+    # Preserve subfolder structure
+    $relPath = $srcPath.Substring((Resolve-Path $InputDir).Path.Length).TrimStart('\','/')
+    $relDir  = Split-Path $relPath -Parent
+    $stem    = [System.IO.Path]::GetFileNameWithoutExtension($src.Name)
+    $outDir  = if ($relDir) { Join-Path $OutputDir $relDir } else { $OutputDir }
+    $outFile = Join-Path $outDir "$stem.mov"
+
+    New-Item -ItemType Directory -Path $outDir -Force | Out-Null
+
+    if (Test-Path $outFile) {
+        Log "[SKIP] $outFile (already exists)"
+        $skip++
+        continue
+    }
+
+    $colorTrc = Get-ProbeField $srcPath "color_transfer"
+    $pixFmt   = Get-ProbeField $srcPath "pix_fmt"
+    $rotation = Get-Rotation $srcPath
+    $rotFilter = Get-RotationFilter $rotation
+
+    switch ($colorTrc) {
+        "arib-std-b67" {
+            $profile   = "dnxhr_hqx"; $pixOut = "yuv422p10le"
+            $colorArgs = @("-color_primaries","bt2020","-color_trc","arib-std-b67","-colorspace","bt2020nc")
+            $hdrNote   = "HDR/HLG"
+        }
+        "smpte2084" {
+            $profile   = "dnxhr_hqx"; $pixOut = "yuv422p10le"
+            $colorArgs = @("-color_primaries","bt2020","-color_trc","smpte2084","-colorspace","bt2020nc")
+            $hdrNote   = "HDR10/PQ"
+        }
+        default {
+            $profile   = "dnxhr_hq"; $pixOut = "yuv422p"
+            $colorArgs = @("-color_primaries","bt709","-color_trc","bt709","-colorspace","bt709")
+            $hdrNote   = "SDR"
+        }
+    }
+
+    $vfChain = "format=$pixOut"
+    if ($rotFilter) { $vfChain = "$rotFilter,$vfChain" }
+
+    Log ""
+    Log "[ENCODE] $srcPath"
+    Log "  -> $outFile"
+    Log "  source: pix_fmt=$pixFmt color_trc=$colorTrc rotation=$rotation"
+    Log "  target: profile=$profile ($hdrNote) vf='$vfChain'"
+
+    $ffArgs = @(
+        "-hide_banner","-loglevel","warning","-stats","-y",
+        "-i", $srcPath,
+        "-map_metadata","0",
+        "-vf", $vfChain,
+        "-c:v","dnxhd","-profile:v",$profile
+    ) + $colorArgs + @(
+        "-c:a","pcm_s16le","-ar","48000",
+        $outFile
+    )
+
+    & ffmpeg @ffArgs 2>>$LogFile
+    if ($LASTEXITCODE -eq 0) {
+        $done++
+        Log "  [OK]"
+    } else {
+        $fail++
+        Log "  [FAIL] see $LogFile"
+        Remove-Item $outFile -ErrorAction SilentlyContinue
+    }
+}
+
+Log ""
+Log "===== Summary ====="
+Log "  total:   $total"
+Log "  encoded: $done"
+Log "  skipped: $skip"
+Log "  failed:  $fail"
+
+if ($fail -gt 0) { exit 1 }
