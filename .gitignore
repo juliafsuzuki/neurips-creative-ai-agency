@@ -23,6 +23,14 @@ stills/*
 # 100MB limit) and is the one piece of "media" we deliberately publish.
 !05_final/Dancing with Genie - Choreographed Movements Meet AI.mp4
 
+# Submission thumbnail. Un-ignore the containing folder first (a "dir/*"
+# match on the parent blocks traversal the same way a bare "dir/" does),
+# then re-exclude everything in it except the one thumbnail file — so the
+# other raw AI image outputs alongside it stay local.
+!03_ai_output/Image/
+03_ai_output/Image/*
+!03_ai_output/Image/Thumbnail Image For Artwork.jpeg
+
 # --- Flow transfer working files (large media + identity photos; keep local) --
 # Keeps notes (README.md) tracked but excludes video/audio/image assets,
 # including personal identity reference photos, from ever reaching GitHub.

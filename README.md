@@ -219,6 +219,7 @@ adding new clips. This is how
 | `01_mezzanine/rehearsal_2026-07-15/Rehersal-FriendLikeMe-20260715.mov` | rehearsal | DNxHR HQX (HDR/HLG, yuv422p10le) | 2:38 |
 | `01_mezzanine/showcase_2026-07-18/Showcase-FriendLikeMe-20260718.mov` | showcase | DNxHR HQ (SDR, yuv422p) | ~length |
 | `05_final/Dancing with Genie - Choreographed Movements Meet AI.mp4` | **final NeurIPS 2026 submission** | H.264, 1920×1080 | 2:17 |
+| `03_ai_output/Image/Thumbnail Image For Artwork.jpeg` | **submission thumbnail** | JPEG, 2752×1536 | — |
 
 ---
 
@@ -298,7 +299,7 @@ typically requires:
 - [x] Final video deliverable (`05_final\Dancing with Genie - Choreographed Movements Meet AI.mp4`)
 - [ ] Artist statement (`docs\artist-statement.md`)
 - [ ] Technical description of the AI methods used (`docs\technical-description.md`)
-- [ ] Still image / thumbnail (goes in `stills\`)
+- [x] Still image / thumbnail (`03_ai_output\Image\Thumbnail Image For Artwork.jpeg` — an AI-generated image kept alongside its siblings rather than moved into `stills\`)
 - [ ] Author / affiliation metadata
 
 Check the official Call for Creative AI page for this year's exact
