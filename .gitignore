@@ -1,11 +1,14 @@
 # --- Media (large, regenerable or backed up separately) ----------------------
-00_originals/
-01_mezzanine/
-02_ai_input/
-03_ai_output/
-05_final/
-audio/
-stills/
+# Use "dir/*" (not "dir/") so the !negation exceptions below actually work —
+# a bare "dir/" exclude blocks git from ever traversing into the directory,
+# which silently defeats any !dir/whatever negation.
+00_originals/*
+01_mezzanine/*
+02_ai_input/*
+03_ai_output/*
+05_final/*
+audio/*
+stills/*
 
 # But DO track a placeholder so the folder structure is visible in git
 !00_originals/.gitkeep
@@ -15,6 +18,10 @@ stills/
 !05_final/.gitkeep
 !audio/.gitkeep
 !stills/.gitkeep
+
+# The submitted NeurIPS deliverable is small enough (well under GitHub's
+# 100MB limit) and is the one piece of "media" we deliberately publish.
+!05_final/Dancing with Genie - Choreographed Movements Meet AI.mp4
 
 # --- Flow transfer working files (large media + identity photos; keep local) --
 # Keeps notes (README.md) tracked but excludes video/audio/image assets,

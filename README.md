@@ -218,6 +218,7 @@ adding new clips. This is how
 |---|---|---|---|
 | `01_mezzanine/rehearsal_2026-07-15/Rehersal-FriendLikeMe-20260715.mov` | rehearsal | DNxHR HQX (HDR/HLG, yuv422p10le) | 2:38 |
 | `01_mezzanine/showcase_2026-07-18/Showcase-FriendLikeMe-20260718.mov` | showcase | DNxHR HQ (SDR, yuv422p) | ~length |
+| `05_final/Dancing with Genie - Choreographed Movements Meet AI.mp4` | **final NeurIPS 2026 submission** | H.264, 1920×1080 | 2:17 |
 
 ---
 
@@ -281,9 +282,11 @@ git commit -m "Initial commit: project scaffold + working mezzanine pipeline"
 # Then create a private repo on github.com and follow their push instructions
 ```
 
-Only the process (README, .gitignore, scripts/recipes, docs) will go to GitHub.
-The video files stay on your local drive and are never uploaded, so the repo
-stays small.
+Only the process (README, .gitignore, scripts/recipes, docs) goes to GitHub.
+Working media (originals, mezzanine, AI input/output) stays on your local
+drive and is never uploaded, so the repo stays small — the one deliberate
+exception is the final submitted deliverable in `05_final/`, which is small
+enough and worth publishing alongside the process that produced it.
 
 ---
 
@@ -292,7 +295,7 @@ stays small.
 The [NeurIPS Creative AI Track](https://neurips.cc/Conferences/2026/CallForCreativeAI)
 typically requires:
 
-- [ ] Final video deliverable (goes in `05_final\`)
+- [x] Final video deliverable (`05_final\Dancing with Genie - Choreographed Movements Meet AI.mp4`)
 - [ ] Artist statement (`docs\artist-statement.md`)
 - [ ] Technical description of the AI methods used (`docs\technical-description.md`)
 - [ ] Still image / thumbnail (goes in `stills\`)
