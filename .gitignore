@@ -16,6 +16,19 @@ stills/
 !audio/.gitkeep
 !stills/.gitkeep
 
+# --- Flow transfer working files (large media + identity photos; keep local) --
+# Keeps notes (README.md) tracked but excludes video/audio/image assets,
+# including personal identity reference photos, from ever reaching GitHub.
+03_flow_inputs/**/*.mov
+03_flow_inputs/**/*.mp4
+03_flow_inputs/**/*.wav
+03_flow_inputs/**/*.png
+03_flow_inputs/**/*.PNG
+03_flow_inputs/**/*.jpg
+03_flow_inputs/**/*.JPG
+03_flow_inputs/**/*.jpeg
+03_flow_inputs/**/*.JPEG
+
 # --- NLE / edit project caches ------------------------------------------------
 04_edit/**/CacheClip/
 04_edit/**/Renders/
@@ -28,6 +41,18 @@ scripts/*.log
 scripts/tmp/
 *.tmp
 
+# --- LaTeX build artifacts ------------------------------------------------------
+paper/build/
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.synctex.gz
+
+!paper/build/.gitkeep
+
 # --- OS cruft -----------------------------------------------------------------
 .DS_Store
 Thumbs.db
@@ -38,3 +63,12 @@ desktop.ini
 .vscode/
 .idea/
 *.swp
+.venv/
+paper/build/
+paper/**/*.aux
+paper/**/*.log
+paper/**/*.out
+paper/**/*.bbl
+paper/**/*.blg
+paper/**/*.synctex.gz
+paper/supplementary/*.mp4

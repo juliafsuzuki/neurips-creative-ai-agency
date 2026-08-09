@@ -27,3 +27,15 @@ Preserving these lets us:
 1. Show what was tried and why it didn't work
 2. Salvage helper logic (rotation detection, HDR auto-detection) if we ever
    write a fixed batch script later
+
+## `segment_toolkit_v3/` through `_v10/`
+
+Earlier iterations of the beat-aligned segmenter (`detect_beats.py` +
+`segment.ps1`/`.sh`) that cuts `01_mezzanine/` sources into clips for
+`02_ai_input/`. Each version fixed an issue in the previous one (overlap
+handling, tolerance windows, the PowerShell port, etc.).
+
+**The current, working version is `scripts/segment_toolkit/`** (unversioned,
+directly under `scripts/` — not in this archive folder). See
+[`docs/segmentation-process.md`](../../docs/segmentation-process.md) for the
+full repeatable process. Don't use any `segment_toolkit_v*` version here.

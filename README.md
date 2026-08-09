@@ -19,14 +19,16 @@ your final NeurIPS submission at station 05.
 |---|---|---|
 | `00_originals/` | Untouched iPhone `.MOV` files, straight off the camera | **Never edit — treat as read-only** |
 | `01_mezzanine/` | High-quality DNxHR editing copies | Everything downstream reads from here |
-| `02_ai_input/` | Clips you've trimmed/prepped to feed into Google AI | |
+| `02_ai_input/` | Beat-aligned clips cut from the mezzanine, ready to feed into Google AI | See [Segmenting a source video into clips](#segmenting-a-source-video-into-clips) below |
 | `03_ai_output/` | Whatever Google AI (Veo, Gemini, etc.) gives back | |
+| `03_flow_inputs/` | Per-clip working folders for partial choreography-transfer in Flow (motion references, identity frames, bookend splices) | Media/photos here stay local — only notes (`README.md`) are tracked in git |
 | `04_edit/` | Your editing project (DaVinci Resolve, Premiere, etc.) | |
 | `05_final/` | The final video you upload to NeurIPS | |
-| `audio/` | Music, voiceover, sound effects | |
+| `audio/` | Music, voiceover, sound effects, beat maps (`beats_*.csv`) | |
 | `stills/` | Reference images, thumbnails, submission photos | |
-| `docs/` | Artist statement, technical description, notes | |
-| `scripts/` | Command recipes and archived batch scripts | |
+| `docs/` | Artist statement, technical description, process notes | |
+| `paper/` | NeurIPS submission LaTeX source | |
+| `scripts/` | Command recipes and archived batch scripts | See `scripts/segment_toolkit/` for the beat-segmenter |
 
 **Why the numbers?** They keep folders in the correct order when you look at
 them in File Explorer, so you always see the pipeline flow at a glance.
@@ -126,6 +128,87 @@ duration=158.100000
 
 If you see `moov atom not found` — the encode was interrupted and the file is
 corrupt. Delete it and re-run the ffmpeg command.
+
+---
+
+## Segmenting a source video into clips
+
+Once a performance is in `01_mezzanine/`, `scripts/segment_toolkit/` cuts it
+into beat-aligned clips for `02_ai_input/`. This is the toolkit that produced
+the 17 clips in `02_ai_input/friendlikeme_showcase/segments_8s/` from the
+"Friend Like Me" showcase master. Full details (exact commands, algorithm,
+manifest format) are in [`docs/segmentation-process.md`](docs/segmentation-process.md) —
+summary below.
+
+**Final version:** `scripts/segment_toolkit/` (the unversioned folder directly
+under `scripts/`). Everything under `scripts/_archive/segment_toolkit_v*/` is
+a superseded iteration kept for reference only — don't use those.
+
+### Prerequisites (one-time)
+
+```powershell
+python3 -m venv .venv
+.venv\Scripts\activate
+pip install librosa soundfile numpy
+```
+
+FFmpeg/ffprobe must already be on `PATH` (from first-time setup above), and
+the source must already be a DNxHR/ProRes mezzanine in `01_mezzanine/`.
+
+### Step 1 — Detect beats (once per song)
+
+```powershell
+python scripts\segment_toolkit\detect_beats.py `
+    01_mezzanine\showcase_2026-07-18\Showcase-FriendLikeMe-20260718.mov `
+    --out audio\beats_friendlikeme.csv
+```
+
+Writes an editable CSV (`beat_index, time_seconds, keep`) using librosa's
+beat tracker.
+
+### Step 2 — Hand-edit the beats CSV
+
+Open the CSV and set `keep=0` (or delete) spurious detections; add rows for
+beats the detector missed. This hand-edited file — not the raw librosa
+output — is what drives the cut.
+
+### Step 3 — Cut the clips
+
+```powershell
+.\scripts\segment_toolkit\segment.ps1 `
+    -InputVideo 01_mezzanine\showcase_2026-07-18\Showcase-FriendLikeMe-20260718.mov `
+    -BeatsCsv   audio\beats_friendlikeme.csv `
+    -OutDir     02_ai_input\friendlikeme_showcase
+```
+
+One run always produces three parallel sets — `segments_4s/`, `segments_6s/`,
+`segments_8s/` — matching Veo 3.1's supported input durations. Each clip
+starts on a kept beat and ends on the beat closest to `start + target`,
+stream-copied losslessly (mezzanine is all-keyframe). The 17-clip set
+referenced above is `segments_8s/`.
+
+### Step 4 — Verify output
+
+Each `segments_*s/` folder gets numbered clips plus a `manifest.csv`
+(`clip, start_seconds, end_seconds, duration_seconds, file`). Confirm clip
+boundaries are adjacent and monotonically increasing.
+
+### Human-review previews
+
+DNxHR `.mov` clips don't play in common players (VLC, Windows Media Player)
+without extra codecs, so `scripts/segment_toolkit/make_previews.ps1` generates
+a parallel `previews/` folder next to each `segments_*s/` folder with small,
+universally-playable H.264 MP4s (540p, CRF 23) — one per clip. The DNxHR
+originals are untouched and remain the canonical files for Veo/Flow upload;
+previews exist purely so a human can scrub clips in any player. Run it with:
+
+```powershell
+.\scripts\segment_toolkit\make_previews.ps1 -InputDir 02_ai_input\friendlikeme_showcase
+```
+
+It skips any preview that already exists, so it's safe to re-run after
+adding new clips. This is how
+`02_ai_input/friendlikeme_showcase/segments_8s/previews/` was created.
 
 ---
 
