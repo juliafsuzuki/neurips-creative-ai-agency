@@ -1,11 +1,137 @@
-# NeurIPS 2026 Creative AI Track — "Agency"
+# Dancing with Genie — Choreographed Movements Meet AI
 
-Ballroom dance performance artwork augmented by Google AI, for submission to
-the [NeurIPS 2026 Creative AI Track](https://neurips.cc/Conferences/2026/CallForCreativeAI).
+A 2-minute, 17-second AI-augmented dance video artwork submitted to the
+[NeurIPS 2026 Creative AI Track](https://neurips.cc/Conferences/2026/CallForCreativeAI)
+(theme: **Agency**). It transforms a recorded live ballroom performance into
+an AI-generated reimagined world: the original American Rhythm choreography
+is preserved exactly as danced, while costumes, architecture, landscapes,
+lighting, and special effects are regenerated around the dancers.
 
-- **Artist:** Julia Suzuki (Truly Human AI)
+- **Artist:** Julia Fumie Suzuki — Securely Wellbeing AI, Truly Human AI (Bloomfield Hills, MI)
 - **Theme:** Agency
-- **Medium:** Competitive ballroom (Rhythm / Smooth) performance video + generative AI augmentation
+- **Medium:** Competitive ballroom (American Rhythm) performance video + generative AI augmentation
+- **Watch:** [youtu.be/ZUP3pySTDcQ](https://youtu.be/ZUP3pySTDcQ)
+- **Paper:** [`05_final/Dancing with Genie - Choreographed Movements Meet AI vF.pdf`](05_final/Dancing%20with%20Genie%20-%20Choreographed%20Movements%20Meet%20AI%20vF.pdf)
+- **Supplementary artifacts:** [Google Drive](https://drive.google.com/drive/folders/1jtSoXBnm1ZeL022Ld7Wz0BitHPVp9sEt)
+- **Prior work:** [*Story of Hope*](https://youtu.be/tTJropXp5nw) (2025), the AI-generated short film this artwork extends
+
+This README serves two audiences. If you're here for the **concept and
+creative framing**, read [About this artwork](#about-this-artwork) and
+[Theme: Agency](#theme-agency) below. If you're here to **reproduce the
+technical pipeline**, skip to [What's in this folder](#whats-in-this-folder).
+
+---
+
+## About this artwork
+
+> *Dancing with Genie: Choreography Meets AI* is a 2-minute, 17-second
+> AI-augmented dance video artwork that transforms a recorded live ballroom
+> dance performance into an AI-generated reimagined world. The audience sees
+> the original American Rhythm choreography preserved while costumes,
+> architecture, landscapes, lighting, and special effects are regenerated
+> around the dancers, accompanied by the original *Friend Like Me* soundtrack.
+>
+> — abstract, *Dancing with Genie* (Suzuki, 2026a)
+
+The source is the artist's American Rhythm showcase performance of *Friend
+Like Me* from Disney's *Aladdin*, recorded July 18, 2026, in which the artist
+performed Princess Jasmine while her dance partner performed Genie. The
+artwork asks whether human dance figures and choreography can remain intact
+while AI regenerates the surrounding visual world — human agency preserves
+the choreography and directs the creative vision, while generative AI
+transforms everything around it.
+
+**How it was made, in one paragraph:** the source video was transcoded to
+DNxHR HQ, its audio was extracted and analyzed for beat/tempo with librosa,
+and the video was segmented into 17 beat-aligned clips of roughly eight
+seconds (see [Segmenting a source video into clips](#segmenting-a-source-video-into-clips)).
+One clip (007) contained a choreographic misstep and was corrected in CapCut
+instead of sent through generative video; the other 16 clips were each
+transformed individually with **Google Flow**'s video-to-video generation,
+using the recorded performance as motion/structural conditioning so the
+choreography carried through unchanged while prompts delegated costumes,
+architecture, sky, moon, dunes, and environmental motion to the model. The
+regenerated clips were assembled in **CapCut** against the original *Friend
+Like Me* audio track. **Nano Banana Pro** generated the submission thumbnail.
+**Claude Code** supported repository management and documentation (this
+README included). **Perplexity** served as a research thought partner
+throughout.
+
+| Tool | Role |
+|---|---|
+| librosa | Beat/tempo detection driving where clips are cut |
+| Google Flow | Video-to-video generation — regenerates the world around the dancers |
+| CapCut | Final assembly/audio sync; also the corrective edit for clip 007 |
+| Nano Banana Pro | Submission thumbnail image generation |
+| Claude Code | Repository management, pipeline scripting, documentation |
+| Perplexity | Research thought partner |
+
+---
+
+## Theme: Agency
+
+The artwork adopts a philosophical view of agency as the capacity to act
+intentionally, considered across five dimensions (Schlosser, 2019), and asks
+which of them should be retained, shared, delegated, or refused when AI
+enters an existing human creative practice — competitive ballroom, where
+agency (intention, choice, causal power, self-direction, responsibility) was
+already distributed among dancers, instructors, choreographers, judges, and
+audiences long before AI arrived.
+
+| Dimension | Status | Note |
+|---|---|---|
+| Intentionality | **Retained** | Every regeneration served an artistic intention the artist established; AI did not determine the artwork's purpose. |
+| Choice | **Negotiated** | Imperfections became opportunities — e.g. clip 007 tested whether AI-assisted correction could better realize intended choreography. |
+| Causal Power | **Shared** | AI had latitude over costumes, objects, architecture, landscapes, and environmental motion — not over the choreography itself. |
+| Self-Direction | **Shared, with a boundary** | AI directed the imaginative visual world; the artist directed the danced world and overall creative vision. |
+| Responsibility | **Retained by the human artist** | AI generated possibilities; the artist prompted, evaluated, selected, rejected, and refined every result. |
+
+The central metaphor is **Genie** from *Aladdin*: extraordinary transformative
+power within defined constraints, valuable only when guided by human
+intention and exercised responsibly. As the paper puts it — *"Like Genie, AI
+can grant extraordinary wishes, but it cannot determine which wishes are
+worth granting."* The key takeaway: as generative AI democratizes what can
+be made, expertise shifts toward judging what *should* be made, what should
+stay authentically human, and where that line belongs — authorship is
+expressed as much through what's retained, shared, delegated, and refused as
+through what's created.
+
+---
+
+## Author
+
+**Julia Fumie Suzuki** is an artist and competitive ballroom dancer, data and
+AI leader, and wellbeing strategist working at the intersection of AI,
+creativity, and human wellbeing. She is the founder of Securely Wellbeing and
+Truly Human AI. Her prior creative work includes the AI-generated short film
+*[Story of Hope](https://youtu.be/tTJropXp5nw)* (2025), which explored
+generative AI's ability to create ballroom dance figures and choreography and
+whose limitations in reliably reproducing specific choreography this artwork
+directly addresses by grounding generation in an authentic human performance.
+She brings 14 years of consulting experience at Accenture and holds
+professional certifications from Google Cloud, NVIDIA, Microsoft, and AWS.
+
+---
+
+## Citation
+
+If you reference this work, please cite:
+
+```
+Suzuki, J. F. (2026a). Dancing with Genie: Choreography Meets AI
+[AI-augmented dance video artwork]. YouTube. https://youtu.be/ZUP3pySTDcQ
+
+Suzuki, J. F. (2026b). Project Genie: Dancing with Genie – Source Code.
+GitHub. https://github.com/juliafsuzuki/neurips-creative-ai-agency
+
+Suzuki, J. F. (2026c). Project Genie: Supplementary Deliverables and
+Artifacts (2026 NeurIPS Creative AI Track – Agency).
+https://drive.google.com/drive/folders/1jtSoXBnm1ZeL022Ld7Wz0BitHPVp9sEt
+```
+
+Full reference list, including the Schlosser (2019) agency framework and the
+prior-work citation for *Story of Hope*, is in the paper
+(`05_final/Dancing with Genie - Choreographed Movements Meet AI vF.pdf`).
 
 ---
 
@@ -23,7 +149,7 @@ your final NeurIPS submission at station 05.
 | `03_ai_output/` | Whatever Google AI (Veo, Gemini, etc.) gives back | |
 | `03_flow_inputs/` | Per-clip working folders for partial choreography-transfer in Flow (motion references, identity frames, bookend splices) | Media/photos here stay local — only notes (`README.md`) are tracked in git |
 | `04_edit/` | Your editing project (DaVinci Resolve, Premiere, etc.) | |
-| `05_final/` | The final video you upload to NeurIPS | |
+| `05_final/` | The exact bundle submitted to NeurIPS: final video, thumbnail, paper PDF | The one media folder published in full on GitHub |
 | `audio/` | Music, voiceover, sound effects, beat maps (`beats_*.csv`) | |
 | `stills/` | Reference images, thumbnails, submission photos | |
 | `docs/` | Artist statement, technical description, process notes | |
@@ -193,6 +319,14 @@ Each `segments_*s/` folder gets numbered clips plus a `manifest.csv`
 (`clip, start_seconds, end_seconds, duration_seconds, file`). Confirm clip
 boundaries are adjacent and monotonically increasing.
 
+**What happened next (outside this repo's scripts):** of the 17 `segments_8s/`
+clips, clip 007 contained a choreographic misstep and was corrected directly
+in CapCut rather than sent through generative video. The remaining 16 clips
+were each uploaded to Google Flow individually for video-to-video generation,
+then all 17 (16 AI-regenerated + 1 CapCut-corrected) were assembled in CapCut
+against the original *Friend Like Me* audio into the `05_final/` deliverable.
+See [About this artwork](#about-this-artwork) for the creative rationale.
+
 ### Human-review previews
 
 DNxHR `.mov` clips don't play in common players (VLC, Windows Media Player)
@@ -219,7 +353,8 @@ adding new clips. This is how
 | `01_mezzanine/rehearsal_2026-07-15/Rehersal-FriendLikeMe-20260715.mov` | rehearsal | DNxHR HQX (HDR/HLG, yuv422p10le) | 2:38 |
 | `01_mezzanine/showcase_2026-07-18/Showcase-FriendLikeMe-20260718.mov` | showcase | DNxHR HQ (SDR, yuv422p) | ~length |
 | `05_final/Dancing with Genie - Choreographed Movements Meet AI.mp4` | **final NeurIPS 2026 submission** | H.264, 1920×1080 | 2:17 |
-| `03_ai_output/Image/Thumbnail Image For Artwork.jpeg` | **submission thumbnail** | JPEG, 2752×1536 | — |
+| `05_final/Thumbnail Image For Artwork.jpeg` | **submission thumbnail** (Nano Banana Pro) | JPEG, 2752×1536 | — |
+| `05_final/Dancing with Genie - Choreographed Movements Meet AI vF.pdf` | **NeurIPS paper** | PDF, 3 pages | — |
 
 ---
 
@@ -236,7 +371,7 @@ adding new clips. This is how
         ▼
 [AI input clips]                  02_ai_input\
         │
-        │  Google Veo / Gemini / etc.
+        │  Google Flow (video-to-video) / Nano Banana Pro (images) / etc.
         ▼
 [AI output clips]                 03_ai_output\
         │
@@ -271,9 +406,9 @@ being written to. Use them only for `docs\` and `05_final\`.
 
 ## Uploading to GitHub
 
-The `.gitignore` file is already configured to include your **scripts and
-docs** but exclude the **giant media files**. When you're ready to push to
-GitHub:
+The `.gitignore` file is already configured to include your **scripts,
+docs, and the `05_final/` submission bundle** but exclude the **giant
+working media files** upstream of it. When you're ready to push to GitHub:
 
 ```powershell
 cd C:\Users\julia\NeurIPS-CreativeAI-Agency
@@ -297,10 +432,10 @@ The [NeurIPS Creative AI Track](https://neurips.cc/Conferences/2026/CallForCreat
 typically requires:
 
 - [x] Final video deliverable (`05_final\Dancing with Genie - Choreographed Movements Meet AI.mp4`)
-- [ ] Artist statement (`docs\artist-statement.md`)
-- [ ] Technical description of the AI methods used (`docs\technical-description.md`)
-- [x] Still image / thumbnail (`03_ai_output\Image\Thumbnail Image For Artwork.jpeg` — an AI-generated image kept alongside its siblings rather than moved into `stills\`)
-- [ ] Author / affiliation metadata
+- [x] Artist statement (Section 3, "How the Theme of Agency Is Addressed," in the paper — no separate `docs\artist-statement.md` was written)
+- [x] Technical description of the AI methods used (Section 2, "The Roles of AI and ML," in the paper)
+- [x] Still image / thumbnail (`05_final\Thumbnail Image For Artwork.jpeg`)
+- [x] Author / affiliation metadata (Section 5, "Author Biography," in the paper; see [Author](#author) above)
 
 Check the official Call for Creative AI page for this year's exact
 requirements and deadlines before submitting.

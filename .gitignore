@@ -6,7 +6,6 @@
 01_mezzanine/*
 02_ai_input/*
 03_ai_output/*
-05_final/*
 audio/*
 stills/*
 
@@ -15,21 +14,13 @@ stills/*
 !01_mezzanine/.gitkeep
 !02_ai_input/.gitkeep
 !03_ai_output/.gitkeep
-!05_final/.gitkeep
 !audio/.gitkeep
 !stills/.gitkeep
 
-# The submitted NeurIPS deliverable is small enough (well under GitHub's
-# 100MB limit) and is the one piece of "media" we deliberately publish.
-!05_final/Dancing with Genie - Choreographed Movements Meet AI.mp4
-
-# Submission thumbnail. Un-ignore the containing folder first (a "dir/*"
-# match on the parent blocks traversal the same way a bare "dir/" does),
-# then re-exclude everything in it except the one thumbnail file — so the
-# other raw AI image outputs alongside it stay local.
-!03_ai_output/Image/
-03_ai_output/Image/*
-!03_ai_output/Image/Thumbnail Image For Artwork.jpeg
+# 05_final/ is NOT excluded above — it's the one media folder we publish in
+# full. It holds the exact bundle submitted to NeurIPS (video, thumbnail,
+# paper PDF) and is meant to be shared alongside the process that produced
+# it. Everything placed there is tracked; keep it to submission-final files.
 
 # --- Flow transfer working files (large media + identity photos; keep local) --
 # Keeps notes (README.md) tracked but excludes video/audio/image assets,
